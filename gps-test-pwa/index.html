@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GPS Home Screen Test</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GPS Test">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0c2233">
+<style>
+:root{--bg:#eef2f4;--ink:#0c2233;--soft:#4b6272;--card:#fff;--line:#c9d5dc;--head:#0c2233;--headink:#f4f8fa;
+--ok:#0b7a4b;--bad:#b3261e;--wait:#8a5a00;--okbg:#dff3e8;--badbg:#fbe3e1;--waitbg:#fff0cc}
+@media (prefers-color-scheme:dark){:root{--bg:#07131c;--ink:#e6eef2;--soft:#93a9b8;--card:#0f2230;--line:#24394a;--head:#0c2233;
+--ok:#5fd39a;--bad:#ff8c84;--wait:#f2c25a;--okbg:#0e3324;--badbg:#3b1613;--waitbg:#3a2c08}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--head);color:var(--headink);padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 16px}
+header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.2px}
+header p{margin:4px 0 0;font-size:13px;color:#a9bfcc}
+main{padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 28px);max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 12px}
+h2{font-size:15px;margin:0 0 8px;font-weight:700}
+.mode{font-size:22px;font-weight:800;margin:0}
+.verdict{border-radius:10px;padding:14px;margin:0 0 12px;border:2px solid}
+.verdict .t{font-size:20px;font-weight:800;margin:0}
+.verdict .d{margin:4px 0 0;font-size:14px}
+.v-wait{background:var(--waitbg);border-color:var(--wait);color:var(--wait)}
+.v-ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.v-bad{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.verdict .d{color:var(--ink)}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+dt{color:var(--soft)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;word-break:break-word}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border-radius:10px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);
+padding:13px 16px;min-height:48px;flex:1 1 140px;cursor:pointer}
+button.alt{background:transparent;color:var(--ink)}
+button:focus-visible{outline:3px solid var(--wait);outline-offset:2px}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;max-height:260px;overflow:auto}
+.note{font-size:12.5px;color:var(--soft);margin:0}
+</style>
+</head>
+<body>
+<header>
+  <h1>GPS Home Screen Test</h1>
+  <p>Tests whether this phone gives GPS to a Home Screen app. Test tool only, not for navigation.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>How this page was opened</h2>
+    <p class="mode" id="mode">Checking…</p>
+    <p class="note" id="modeNote"></p>
+  </section>
+
+  <section class="verdict v-wait" id="verdict" aria-live="polite">
+    <p class="t" id="vt">GPS not started</p>
+    <p class="d" id="vd">Tap Start GPS. Allow location if the phone asks.</p>
+  </section>
+
+  <div class="row" style="margin-bottom:12px">
+    <button id="start">Start GPS</button>
+    <button id="stop" class="alt">Stop GPS</button>
+  </div>
+
+  <section class="card">
+    <h2>Latest position from this phone</h2>
+    <dl>
+      <dt>Latitude</dt><dd id="lat">none yet</dd>
+      <dt>Longitude</dt><dd id="lon">none yet</dd>
+      <dt>Accuracy</dt><dd id="acc">none yet</dd>
+      <dt>Age of position</dt><dd id="age">none yet</dd>
+      <dt>Positions received</dt><dd id="count">0</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Device facts</h2>
+    <dl>
+      <dt>iPhone / iPad</dt><dd id="f-ios"></dd>
+      <dt>Home Screen mode (display-mode)</dt><dd id="f-dm"></dd>
+      <dt>Home Screen mode (navigator.standalone)</dt><dd id="f-ns"></dd>
+      <dt>Secure page (https)</dt><dd id="f-sec"></dd>
+      <dt>Location permission</dt><dd id="f-perm"></dd>
+      <dt>Service worker</dt><dd id="f-sw"></dd>
+      <dt>Browser</dt><dd id="f-ua" style="font-size:12px"></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Event log</h2>
+    <pre id="log" aria-live="off">Nothing yet.</pre>
+  </section>
+
+  <div class="row">
+    <button id="copy">Copy report</button>
+    <button id="clear" class="alt">Clear log</button>
+  </div>
+  <p class="note" style="margin-top:12px">Copy report, then paste it into the chat. It contains the facts above and the log. It includes your coordinates once a position arrives, so delete those lines first if you prefer.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var ua = navigator.userAgent || '';
+  var isIos = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var dmStandalone = !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  var nsStandalone = navigator.standalone === true;
+  var homeScreen = dmStandalone || nsStandalone;
+  var secure = window.isSecureContext === true;
+  var watchId = null, lastTs = null, count = 0, logLines = [];
+
+  function stamp(){ return new Date().toLocaleTimeString([], {hour12:false}); }
+  function log(msg){
+    logLines.push(stamp() + '  ' + msg);
+    if (logLines.length > 80) logLines.shift();
+    $('log').textContent = logLines.join('\n');
+  }
+  function yn(v){ return v ? 'yes' : 'no'; }
+
+  $('mode').textContent = homeScreen ? 'Home Screen app' : 'Browser tab';
+  $('modeNote').textContent = homeScreen
+    ? 'The phone treats this as an installed app, so it may have its own location permission.'
+    : 'Opened in a normal browser page. To test the Home Screen case, add this page to the Home Screen and open it from the icon.';
+  $('f-ios').textContent = yn(isIos);
+  $('f-dm').textContent = yn(dmStandalone);
+  $('f-ns').textContent = navigator.standalone === undefined ? 'not available' : yn(nsStandalone);
+  $('f-sec').textContent = yn(secure);
+  $('f-ua').textContent = ua;
+  $('f-sw').textContent = 'checking…';
+  $('f-perm').textContent = 'checking…';
+
+  function verdict(kind, title, detail){
+    var v = $('verdict');
+    v.className = 'verdict v-' + kind;
+    $('vt').textContent = title;
+    $('vd').textContent = detail;
+  }
+
+  function readPermission(){
+    if (!navigator.permissions || !navigator.permissions.query) { $('f-perm').textContent = 'cannot be read here'; return; }
+    navigator.permissions.query({name:'geolocation'}).then(function(p){
+      $('f-perm').textContent = p.state;
+      p.onchange = function(){ $('f-perm').textContent = p.state; log('Permission changed to ' + p.state); };
+    }).catch(function(){ $('f-perm').textContent = 'cannot be read here'; });
+  }
+  readPermission();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(function(){ $('f-sw').textContent = 'registered'; })
+      .catch(function(e){ $('f-sw').textContent = 'failed: ' + (e && e.message || e); });
+  } else { $('f-sw').textContent = 'not supported'; }
+
+  function onPos(p){
+    count++; lastTs = p.timestamp;
+    var c = p.coords;
+    $('lat').textContent = c.latitude.toFixed(5);
+    $('lon').textContent = c.longitude.toFixed(5);
+    $('acc').textContent = '±' + Math.round(c.accuracy) + ' m';
+    $('count').textContent = String(count);
+    verdict('ok', 'GPS works here', 'A position arrived while opened as: ' + (homeScreen ? 'Home Screen app.' : 'browser tab.'));
+    log('Position received, accuracy ±' + Math.round(c.accuracy) + ' m');
+    readPermission();
+  }
+  function onErr(e){
+    var names = {1:'Permission denied',2:'Position unavailable',3:'Timed out'};
+    var nm = names[e.code] || 'Error';
+    log('Error ' + e.code + ' (' + nm + '): ' + e.message);
+    if (e.code === 1) {
+      verdict('bad', 'Location refused (code 1)',
+        homeScreen && isIos
+          ? 'This Home Screen app was refused location. Compare with a Safari tab. Settings → Privacy & Security → Location Services may list it.'
+          : 'Location is turned off for this page. Allow it in the browser or phone settings, then tap Start GPS.');
+    } else if (e.code === 2) {
+      verdict('wait', 'No position available (code 2)', 'The phone could not get a position. Try near a window or outdoors.');
+    } else {
+      verdict('wait', 'Timed out (code 3)', 'No position arrived in time. The test keeps trying while it runs.');
+    }
+    readPermission();
+  }
+
+  $('start').onclick = function(){
+    if (!('geolocation' in navigator)) { verdict('bad','No GPS support','This browser has no geolocation.'); log('geolocation missing'); return; }
+    if (!secure) { verdict('bad','Page is not secure','Geolocation needs https. Open the https:// address.'); log('Not a secure context'); return; }
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    count = 0; $('count').textContent = '0';
+    verdict('wait','Waiting for a position…','Allow location if the phone asks.');
+    log('Start GPS tapped (' + (homeScreen ? 'Home Screen app' : 'browser tab') + ')');
+    watchId = navigator.geolocation.watchPosition(onPos, onErr, {enableHighAccuracy:true, maximumAge:0, timeout:20000});
+  };
+  $('stop').onclick = function(){
+    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    verdict('wait','GPS stopped','Tap Start GPS to try again.');
+    log('Stop GPS tapped');
+  };
+  $('clear').onclick = function(){ logLines = []; $('log').textContent = 'Nothing yet.'; };
+  $('copy').onclick = function(){
+    var t = [
+      'GPS Home Screen Test report',
+      'Opened as: ' + $('mode').textContent,
+      'iPhone/iPad: ' + $('f-ios').textContent,
+      'display-mode standalone: ' + $('f-dm').textContent,
+      'navigator.standalone: ' + $('f-ns').textContent,
+      'Secure page: ' + $('f-sec').textContent,
+      'Location permission: ' + $('f-perm').textContent,
+      'Result: ' + $('vt').textContent + ' - ' + $('vd').textContent,
+      'Positions received: ' + $('count').textContent,
+      'Browser: ' + ua,
+      '', 'Log:', logLines.join('\n')
+    ].join('\n');
+    var done = function(){ log('Report copied'); $('copy').textContent = 'Copied'; setTimeout(function(){ $('copy').textContent = 'Copy report'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function(){ window.prompt('Copy this report:', t); });
+    else window.prompt('Copy this report:', t);
+  };
+
+  setInterval(function(){
+    if (lastTs !== null) $('age').textContent = Math.max(0, Math.round((Date.now() - lastTs) / 1000)) + ' s';
+  }, 1000);
+  log('Page opened as ' + (homeScreen ? 'Home Screen app' : 'browser tab') + (isIos ? ' on iPhone/iPad' : ''));
+})();
+</script>
+</body>
+</html>
